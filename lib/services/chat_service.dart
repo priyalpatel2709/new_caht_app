@@ -142,7 +142,7 @@ class ChatService {
       'file_url': signedUrl,
       'file_name': fileName,
       'file_size': fileSizeInBytes,
-      ...? (storagePath == null ? null : {'file_path': storagePath}),
+      // ...? (storagePath == null ? null : {'file_url': storagePath}),
     };
     try {
       await _supabase.from('messages').insert(payload);
