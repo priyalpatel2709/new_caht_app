@@ -83,11 +83,16 @@ class SplashScreen extends HookConsumerWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.chat_bubble_rounded, color: Colors.white, size: 44),
+                    child:  Image.asset(
+                      'assets/icon/icon.png',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.broken_image, size: 48),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Superbase',
+                    'Voto',
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.5,
