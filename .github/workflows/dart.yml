@@ -2,7 +2,7 @@ name: Flutter APK Build
 
 on:
   push:
-    branches: ["main", "new_ui/ux"]
+    branches: ["main"]
 
 jobs:
   build:

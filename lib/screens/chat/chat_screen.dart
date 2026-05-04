@@ -1,10 +1,12 @@
 import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mime/mime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -101,33 +103,29 @@ class ChatScreen extends HookConsumerWidget {
       }
     }
 
-    Future<void> pickAndSendImage() async {
-      final picker = ImagePicker();
-      final x = await picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 82,
-      );
-      if (x == null || !context.mounted) return;
-      final bytes = await x.readAsBytes();
-      if (!context.mounted) return;
+    Future<void> uploadAndSendAttachment({
+      required Uint8List bytes,
+      required String fileName,
+      required String messageType,
+      String? mimeType,
+    }) async {
       final uid = Supabase.instance.client.auth.currentUser?.id;
       if (uid == null) return;
 
       sending.value = true;
       try {
-        final fileName = x.name.isNotEmpty ? x.name : 'upload.jpg';
         final path = await storage.uploadChatFile(
           currentUserId: uid,
           fileName: fileName,
-          fileBytes: Uint8List.fromList(bytes),
-          mimeType: 'image/jpeg',
+          fileBytes: bytes,
+          mimeType: mimeType,
         );
         final signed = await storage.createChatFileSignedUrl(path);
         await chat.sendFileMessage(
           roomId: chatId,
           fileName: fileName,
           signedUrl: signed,
-          messageType: 'image',
+          messageType: messageType,
           fileSizeInBytes: bytes.length,
           storagePath: path,
         );
@@ -146,6 +144,83 @@ class ChatScreen extends HookConsumerWidget {
       } finally {
         sending.value = false;
       }
+    }
+
+    Future<void> pickAndSendImage() async {
+      final picker = ImagePicker();
+      final x = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 82,
+      );
+      if (x == null || !context.mounted) return;
+      final bytes = await x.readAsBytes();
+      if (!context.mounted) return;
+      final fileName = x.name.isNotEmpty ? x.name : 'upload.jpg';
+      await uploadAndSendAttachment(
+        bytes: Uint8List.fromList(bytes),
+        fileName: fileName,
+        messageType: 'image',
+        mimeType: 'image/jpeg',
+      );
+    }
+
+    Future<void> pickAndSendFile() async {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty || !context.mounted) return;
+      final file = result.files.single;
+      final rawBytes = file.bytes;
+      if (rawBytes == null || !context.mounted) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not read the selected file')),
+          );
+        }
+        return;
+      }
+      final bytes = Uint8List.fromList(rawBytes);
+      final rawName = file.name.trim();
+      final fileName = rawName.isNotEmpty ? rawName : 'attachment';
+      final mime = lookupMimeType(fileName) ?? 'application/octet-stream';
+      final asImage = mime.startsWith('image/');
+      await uploadAndSendAttachment(
+        bytes: bytes,
+        fileName: fileName,
+        messageType: asImage ? 'image' : 'file',
+        mimeType: mime,
+      );
+    }
+
+    Future<void> showAttachmentOptions() async {
+      await showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('Photo'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  pickAndSendImage();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.insert_drive_file_outlined),
+                title: const Text('File'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  pickAndSendFile();
+                },
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     final theme = Theme.of(context);
@@ -248,7 +323,7 @@ class ChatScreen extends HookConsumerWidget {
                     ),
                   );
                 },
-                onAttach: pickAndSendImage,
+                onAttach: showAttachmentOptions,
               ),
             ],
           );
@@ -294,7 +369,8 @@ class _MessageInputBar extends HookWidget {
               ),
               IconButton(
                 onPressed: sending ? null : () => onAttach(),
-                icon: const Icon(Icons.image_outlined),
+                icon: const Icon(Icons.attach_file_outlined),
+                tooltip: 'Attach',
               ),
               Expanded(
                 child: DecoratedBox(
