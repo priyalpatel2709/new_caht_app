@@ -79,7 +79,7 @@ class Message {
       fileSize: json['file_size'] != null
           ? int.tryParse(json['file_size'].toString())
           : null,
-      filePath: json['file_path'] as String?,
+      filePath: json['file_url'] as String?,
       profile: profile,
     );
   }

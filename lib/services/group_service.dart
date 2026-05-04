@@ -151,7 +151,7 @@ class GroupService {
       'file_url': signedUrl,
       'file_name': fileName,
       'file_size': fileSizeInBytes,
-      ...? (storagePath == null ? null : {'file_path': storagePath}),
+      // ...? (storagePath == null ? null : {'file_url': storagePath}),
     };
     try {
       await _supabase.from('group_messages').insert(payload);
