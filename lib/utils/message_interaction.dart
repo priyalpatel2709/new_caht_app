@@ -4,10 +4,7 @@ import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Opens URLs, mailto:, and tel: from [LinkableElement]s (used with linkify).
-Future<void> openLinkableElement(
-  BuildContext context,
-  LinkableElement link,
-) async {
+Future<void> openLinkableElement(BuildContext context, LinkableElement link) async {
   var uri = Uri.tryParse(link.url);
   if (uri == null || uri.scheme.isEmpty) {
     _briefSnack(context, 'Invalid link');

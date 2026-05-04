@@ -73,6 +73,23 @@ class ChatService {
     }
   }
 
+  Future<Message?> fetchLatestMessageForRoom(String roomId) async {
+    try {
+      final List<dynamic> response = await _supabase
+          .from('messages')
+          .select('*, profiles(username, avatar_url)')
+          .eq('room_id', roomId)
+          .order('created_at', ascending: false)
+          .limit(1);
+      if (response.isEmpty) return null;
+      return Message.fromJson(
+        Map<String, dynamic>.from(response.first as Map),
+      );
+    } on PostgrestException {
+      rethrow;
+    }
+  }
+
   Future<List<Message>> fetchMessagesForRoom(String roomId) async {
     try {
       final List<dynamic> response = await _supabase

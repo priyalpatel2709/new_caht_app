@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/friend_request.dart';
+import '../models/outgoing_friend_request.dart';
 import '../models/profile.dart';
 
 class FriendService {
@@ -45,6 +46,59 @@ class FriendService {
         'receiver_id': targetUserId,
         'status': 'pending',
       });
+    } on PostgrestException {
+      rethrow;
+    }
+  }
+
+  /// Pending requests you sent (for outgoing tab).
+  Future<List<OutgoingFriendRequest>> fetchOutgoingPendingRequests() async {
+    final uid = _currentUserId!;
+    try {
+      final rows = await _supabase
+          .from('friend_requests')
+          .select()
+          .eq('sender_id', uid)
+          .eq('status', 'pending');
+
+      final list = rows.cast<Map<String, dynamic>>().toList();
+      if (list.isEmpty) return [];
+
+      final receiverIds =
+          list.map((r) => r['receiver_id'] as String).toSet().toList();
+      final profilesById = <String, Profile>{};
+
+      try {
+        final List<dynamic> resp = await _supabase
+            .from('profiles')
+            .select('id, username, avatar_url')
+            .inFilter('id', receiverIds);
+
+        for (final raw in resp) {
+          final map = Map<String, dynamic>.from(raw as Map);
+          final id = map['id'] as String;
+          profilesById[id] = Profile.fromJson(map);
+        }
+      } on PostgrestException {
+        // fall through with unknown profiles
+      }
+
+      for (final id in receiverIds) {
+        profilesById.putIfAbsent(id, () => Profile.unknown(id));
+      }
+
+      return list.map((row) {
+        final rid = row['receiver_id'] as String;
+        final p = profilesById[rid] ?? Profile.unknown(rid);
+        return OutgoingFriendRequest.fromJson({
+          ...row,
+          'profiles': {
+            'id': p.id,
+            'username': p.username,
+            'avatar_url': p.avatarUrl,
+          },
+        });
+      }).toList();
     } on PostgrestException {
       rethrow;
     }
