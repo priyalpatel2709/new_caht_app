@@ -1,0 +1,28 @@
+name: super_base_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  supabase_flutter: ^2.12.4
+  provider: ^6.1.5
+  timeago: ^3.7.1
+  image_picker: ^1.1.2
+  file_picker: ^8.1.6
+  url_launcher: ^6.3.1
+  mime: ^2.0.0
+  flutter_linkify:
+  linkify:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
