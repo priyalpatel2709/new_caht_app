@@ -33,7 +33,7 @@ jobs:
       # Copy APK into website
       - name: Copy APK to Web Folder
         run: |
-          cp build/app/outputs/flutter-apk/app-release.apk build/web/
+          cp build/app/outputs/flutter-apk/app-release.apk build/web/app.apk
 
       # Upload APK artifact
       - name: Upload APK Artifact
