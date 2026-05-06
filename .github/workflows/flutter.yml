@@ -3,7 +3,7 @@ name: Flutter Web + APK Deploy
 on:
   push:
     branches:
-      - main
+      - new_action
 
 jobs:
   build:
