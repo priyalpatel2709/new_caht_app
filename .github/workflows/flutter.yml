@@ -54,5 +54,5 @@ jobs:
           enable-commit-comment: false
           overwrites-pull-request-comment: false
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: "nfp_rjnd3r5f4K81mhnrzyqh1AcfDpWh1qVP6c3a"
+          NETLIFY_SITE_ID: "5b8e98c1-747f-46b0-bafe-142e5ebac37c"
