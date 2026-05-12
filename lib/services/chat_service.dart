@@ -129,7 +129,7 @@ class ChatService {
   Future<void> sendFileMessage({
     required String roomId,
     required String fileName,
-    required String signedUrl,
+    required String signedUrl,  
     required String messageType,
     required int fileSizeInBytes,
     String? storagePath,

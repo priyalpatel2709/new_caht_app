@@ -8,7 +8,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:super_base_app/utils/file_helper.dart';
+import 'package:super_base_app/widgets/full_screen_image_view.dart';
 
 import '../../models/message.dart';
 import '../../presentation/providers/service_providers.dart';
@@ -39,10 +40,10 @@ class ChatScreen extends HookConsumerWidget {
     final storage = ref.watch(storageServiceProvider);
     final myId = Supabase.instance.client.auth.currentUser?.id;
 
-    Future<void> openFile(Message m) async {
-      final messenger = ScaffoldMessenger.of(context);
+    Future<String?> resolveChatFileUrl(Message m) async {
       try {
         String? url = m.fileUrl;
+
         if (m.filePath != null && m.filePath!.isNotEmpty) {
           try {
             url = await ref
@@ -52,37 +53,96 @@ class ChatScreen extends HookConsumerWidget {
             url = m.fileUrl;
           }
         }
+
+        if (url == null || url.isEmpty) return null;
+        return url;
+      } on StorageException {
+        return null;
+      }
+    }
+
+    Future<void> openFile(Message m) async {
+      final messenger = ScaffoldMessenger.of(context);
+
+      try {
+        final url = await resolveChatFileUrl(m);
+
         if (!context.mounted) return;
+
         if (url == null || url.isEmpty) {
           messenger.showSnackBar(
             const SnackBar(content: Text('Cannot open file')),
           );
           return;
         }
-        final uri = Uri.parse(url);
-        if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-          if (!context.mounted) return;
-          messenger.showSnackBar(
-            const SnackBar(content: Text('Cannot open file')),
-          );
-        }
-      } on StorageException catch (e) {
+
+        await FileHelper.openFile(url);
+      } catch (e) {
+        debugPrint(e.toString());
+
         if (!context.mounted) return;
-        messenger.showSnackBar(SnackBar(content: Text(e.message)));
+
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Failed to open file')),
+        );
       }
     }
 
-    Future<void> openImage(Message m) async {
+    //     Future<void> openFile(Message m) async {
+    //   final messenger = ScaffoldMessenger.of(context);
+    //   try {
+    //     String? url = m.fileUrl;
+    //     if (m.filePath != null && m.filePath!.isNotEmpty) {
+    //       try {
+    //         url = await ref
+    //             .read(storageServiceProvider)
+    //             .createChatFileSignedUrlForOpen(m.filePath!);
+    //       } on StorageException {
+    //         url = m.fileUrl;
+    //       }
+    //     }
+    //     if (!context.mounted) return;
+    //     if (url == null || url.isEmpty) {
+    //       messenger.showSnackBar(
+    //         const SnackBar(content: Text('Cannot open file')),
+    //       );
+    //       return;
+    //     }
+    //     final uri = Uri.parse(url);
+    //     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    //       if (!context.mounted) return;
+    //       messenger.showSnackBar(
+    //         const SnackBar(content: Text('Cannot open file')),
+    //       );
+    //     }
+    //   } on StorageException catch (e) {
+    //     if (!context.mounted) return;
+    //     messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    //   }
+    // }
+
+    // Future<void> openImage(Message m) async {
+    //   final url = m.fileUrl;
+    //   if (url == null || url.isEmpty) return;
+    //   final uri = Uri.parse(url);
+    //   if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    //     if (context.mounted) {
+    //       ScaffoldMessenger.of(
+    //         context,
+    //       ).showSnackBar(const SnackBar(content: Text('Cannot open image')));
+    //     }
+    //   }
+    // }
+
+    Future<void> openImage(BuildContext context, Message m) async {
       final url = m.fileUrl;
+
       if (url == null || url.isEmpty) return;
-      final uri = Uri.parse(url);
-      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cannot open image')),
-          );
-        }
-      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => FullScreenImageViewer(imageUrl: url)),
+      );
     }
 
     Future<void> send() async {
@@ -94,9 +154,9 @@ class ChatScreen extends HookConsumerWidget {
         text.clear();
       } on PostgrestException catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.message)));
         }
       } finally {
         sending.value = false;
@@ -131,15 +191,15 @@ class ChatScreen extends HookConsumerWidget {
         );
       } on StorageException catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.message)));
         }
       } on PostgrestException catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.message)));
         }
       } finally {
         sending.value = false;
@@ -301,7 +361,8 @@ class ChatScreen extends HookConsumerWidget {
                         message: m,
                         isMine: mine,
                         onOpenFile: () => openFile(m),
-                        onOpenImage: () => openImage(m),
+                        onOpenImage: () => openImage(context, m),
+                        resolveFileUrl: () => resolveChatFileUrl(m),
                       ),
                     );
                   },
@@ -378,7 +439,9 @@ class _MessageInputBar extends HookWidget {
                     color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.08,
+                      ),
                     ),
                   ),
                   child: TextField(
@@ -426,7 +489,9 @@ class _MessageInputBar extends HookWidget {
                           ? null
                           : [
                               BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.35),
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.35,
+                                ),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -443,7 +508,11 @@ class _MessageInputBar extends HookWidget {
                                 color: theme.colorScheme.primary,
                               ),
                             )
-                          : const Icon(Icons.send_rounded, color: Colors.white, size: 22),
+                          : const Icon(
+                              Icons.send_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
                     ),
                   ),
                 ),

@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:super_base_app/utils/file_helper.dart';
 
 import '../../models/group_message.dart';
 import '../../presentation/providers/service_providers.dart';
@@ -26,6 +27,48 @@ class GroupChatScreen extends HookConsumerWidget {
     final sending = useState(false);
     final group = ref.watch(groupServiceProvider);
     final myId = Supabase.instance.client.auth.currentUser?.id;
+
+    Future<String?> resolveGroupFileUrl(GroupMessage m) async {
+      try {
+        String? url = m.fileUrl;
+
+        if (m.filePath != null && m.filePath!.isNotEmpty) {
+          try {
+            url = await ref
+                .read(storageServiceProvider)
+                .createChatFileSignedUrlForOpen(m.filePath!);
+          } on StorageException {
+            url = m.fileUrl;
+          }
+        }
+
+        if (url == null || url.isEmpty) return null;
+        return url;
+      } on StorageException {
+        return null;
+      }
+    }
+
+    Future<void> openGroupFile(GroupMessage m) async {
+      final messenger = ScaffoldMessenger.of(context);
+      try {
+        final url = await resolveGroupFileUrl(m);
+        if (!context.mounted) return;
+        if (url == null || url.isEmpty) {
+          messenger.showSnackBar(
+            const SnackBar(content: Text('Cannot open file')),
+          );
+          return;
+        }
+        await FileHelper.openFile(url);
+      } catch (e) {
+        debugPrint(e.toString());
+        if (!context.mounted) return;
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Failed to open file')),
+        );
+      }
+    }
 
     final membersFuture = useMemoized(
       () => group.fetchGroupMembers(groupId),
@@ -140,6 +183,8 @@ class GroupChatScreen extends HookConsumerWidget {
                       child: GroupMessageBubble(
                         message: m,
                         isMine: mine,
+                        onOpenFile: () => openGroupFile(m),
+                        resolveFileUrl: () => resolveGroupFileUrl(m),
                       ),
                     );
                   },
