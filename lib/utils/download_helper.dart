@@ -1,7 +1,8 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:gal/gal.dart';
+// import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -18,5 +19,5 @@ Future<void> downloadImage(String url) async {
 
   await Dio().download(url, filePath);
 
-  await ImageGallerySaver.saveFile(filePath);
+  await Gal.putImage(filePath);
 }

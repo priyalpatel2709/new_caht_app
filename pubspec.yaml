@@ -27,16 +27,16 @@ dependencies:
   flutter_linkify: ^6.0.0
   linkify: ^5.0.0
   rename_app: ^1.6.5
-  photo_view:
-  dio:
-  path_provider:
-  permission_handler:
-  flutter_cache_manager:
-  cached_network_image:
-  image_gallery_saver:
-  share_plus:
-  syncfusion_flutter_pdfviewer:
-  open_filex:
+  photo_view: ^0.15.0
+  dio: ^5.9.2
+  path_provider: ^2.1.5
+  permission_handler: ^12.0.1
+  flutter_cache_manager: ^3.4.1
+  cached_network_image: ^3.4.1
+  gal: ^2.3.2
+  share_plus: ^12.0.2
+  syncfusion_flutter_pdfviewer: ^33.2.5
+  open_filex: ^4.7.0
 
 
 dev_dependencies:
