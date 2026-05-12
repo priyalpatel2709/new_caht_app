@@ -262,7 +262,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     } on PostgrestException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message)),
+         SnackBar(content: Text(e.message)),
         );
       }
     }
