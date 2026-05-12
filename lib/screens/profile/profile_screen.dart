@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -158,20 +159,24 @@ class ProfileScreen extends ConsumerWidget {
               if (context.mounted) context.go('/login');
             },
           ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
+          if (kIsWeb)
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                ),
+                onPressed: downloadApk,
+                icon: const Icon(Icons.download),
+                label: const Text(
+                  'Download APK',
+                  style: TextStyle(fontSize: 16),
                 ),
               ),
-              onPressed: downloadApk,
-              icon: const Icon(Icons.download),
-              label: const Text('Download APK', style: TextStyle(fontSize: 16)),
             ),
-          ),
         ],
       ),
     );
