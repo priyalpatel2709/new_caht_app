@@ -17,6 +17,7 @@ class MessageBubble extends StatelessWidget {
   final bool isMine;
   final VoidCallback? onOpenFile;
   final VoidCallback? onOpenImage;
+  final Future<String?> Function()? resolveFileUrl;
 
   const MessageBubble({
     super.key,
@@ -24,6 +25,7 @@ class MessageBubble extends StatelessWidget {
     required this.isMine,
     this.onOpenFile,
     this.onOpenImage,
+    this.resolveFileUrl,
   });
 
   String get _copyPlain {
@@ -62,6 +64,7 @@ class MessageBubble extends StatelessWidget {
         fileName: message.fileName ?? message.content,
         fileSizeBytes: message.fileSize,
         onOpen: onOpenFile,
+        resolveFileUrl: resolveFileUrl,
       );
     }
     return _LinkifyMessageBody(text: message.content);
@@ -74,6 +77,7 @@ class GroupMessageBubble extends StatelessWidget {
   final bool isMine;
   final VoidCallback? onOpenFile;
   final VoidCallback? onOpenImage;
+  final Future<String?> Function()? resolveFileUrl;
 
   const GroupMessageBubble({
     super.key,
@@ -81,6 +85,7 @@ class GroupMessageBubble extends StatelessWidget {
     required this.isMine,
     this.onOpenFile,
     this.onOpenImage,
+    this.resolveFileUrl,
   });
 
   String get _copyPlain {
@@ -119,6 +124,7 @@ class GroupMessageBubble extends StatelessWidget {
         fileName: message.fileName ?? message.content,
         fileSizeBytes: message.fileSize,
         onOpen: onOpenFile,
+        resolveFileUrl: resolveFileUrl,
       );
     }
     return _LinkifyMessageBody(text: message.content);

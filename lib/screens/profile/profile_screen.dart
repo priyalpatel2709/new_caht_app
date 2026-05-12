@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../presentation/providers/app_providers.dart';
 import '../../presentation/providers/home_overview_provider.dart';
@@ -61,7 +63,9 @@ class ProfileScreen extends ConsumerWidget {
                       'Member since ${p.createdAt!.year}',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                   ],
@@ -76,7 +80,11 @@ class ProfileScreen extends ConsumerWidget {
             subtitle: 'Change username in Supabase SQL or add a form later',
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Use ChatService.updateUsername from settings when ready')),
+                const SnackBar(
+                  content: Text(
+                    'Use ChatService.updateUsername from settings when ready',
+                  ),
+                ),
               );
             },
           ),
@@ -86,10 +94,16 @@ class ProfileScreen extends ConsumerWidget {
               color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
-                    Icon(Icons.palette_outlined, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.palette_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(
@@ -145,9 +159,35 @@ class ProfileScreen extends ConsumerWidget {
               if (context.mounted) context.go('/login');
             },
           ),
+          if (kIsWeb)
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                ),
+                onPressed: downloadApk,
+                icon: const Icon(Icons.download),
+                label: const Text(
+                  'Download APK',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  Future<void> downloadApk() async {
+    final uri = Uri.parse('/app.apk');
+
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch APK download');
+    }
   }
 
   static String _modeLabel(ThemeMode m) {
@@ -197,13 +237,12 @@ class _SettingsTile extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: theme.textTheme.titleMedium?.copyWith(color: textColor),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: textColor,
+                        ),
                       ),
                       if (subtitle case final s?)
-                        Text(
-                          s,
-                          style: theme.textTheme.bodySmall,
-                        ),
+                        Text(s, style: theme.textTheme.bodySmall),
                     ],
                   ),
                 ),
