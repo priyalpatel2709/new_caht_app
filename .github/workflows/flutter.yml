@@ -1,0 +1,58 @@
+name: Flutter Web + APK Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.6"
+          channel: stable
+
+      - name: Flutter Pub Get
+        run: flutter pub get
+
+      # Build APK
+      - name: Build APK
+        run: flutter build apk --release
+
+      # Build Web
+      - name: Build Web
+        run: flutter build web --release
+
+      # Copy APK into website
+      - name: Copy APK to Web Folder
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk build/web/
+
+      # Upload APK artifact
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      # Deploy to Netlify
+      - name: Deploy To Netlify
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: './build/web'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Production Deploy"
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+          overwrites-pull-request-comment: false
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
